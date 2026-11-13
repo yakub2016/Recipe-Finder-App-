@@ -1,98 +1,172 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+  StatusBar,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Image } from "expo-image";
+import { router } from "expo-router";
+import { hasCompletedOnboarding } from "../lib/onboarding";
+import { getCurrentUser } from "../lib/localAuth";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+const Onboarding = () => {
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+
+      <View style={styles.topLeftLeaf} />
+      <View style={styles.topRightLeaf} />
+
+      {/* Title */}
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <Text style={styles.happy}>Happy </Text>
+          <Text style={styles.food}>Food</Text>
+        </View>
+        <Text style={styles.delivery}>Delivery</Text>
+        <Text style={styles.subtitle}>
+          5000+ best free food in our{"\n"}restaurant service
+        </Text>
+      </View>
+
+      <View style={styles.imageWrap}>
+        <Image
+          source={require("../../assets/images/homeworkdirartifactshappy-food.gif")}
+          style={styles.heroImage}
+        
+        />
+      </View>
+
+      <TouchableOpacity
+        style={styles.startBtn}
+        activeOpacity={0.85}
+        onPress={async () => {
+          const done = await hasCompletedOnboarding();
+          if (!done) {
+            router.push("/onboarding");
+            return;
+          }
+          const user = await getCurrentUser();
+          router.push(user ? "/home" : "/login");
+        }}
+      >
+        <Text style={styles.startText}>Start</Text>
+      </TouchableOpacity>
+
+      <View style={styles.bottomLeftLeaf} />
+    </SafeAreaView>
   );
-}
+};
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
+export default Onboarding;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: "#FBFBFB",
+    paddingHorizontal: 24,
   },
-  safeArea: {
+
+  header: {
+    marginTop: 20,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  happy: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    fontFamily: "System",
+  },
+  food: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#F5C518",
+    fontFamily: "System",
+  },
+  delivery: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    marginTop: 2,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#8A8A8A",
+    marginTop: 12,
+    lineHeight: 20,
+  },
+
+  imageWrap: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 10,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  heroImage: {
+    width: 800,
+    height: 600,
   },
-  title: {
-    textAlign: 'center',
+
+  startBtn: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: "#F5C518",
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "flex-end",
+    marginBottom: 30,
+    marginRight: 8,
+    elevation: 4,
+    shadowColor: "#F5C518",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
-  code: {
-    textTransform: 'uppercase',
+  startText: {
+    color: "#1A1A1A",
+    fontSize: 15,
+    fontWeight: "600",
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+
+  topLeftLeaf: {
+    position: "absolute",
+    top: -20,
+    left: -30,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: "#F5C518",
+    opacity: 0.9,
+    transform: [{ rotate: "-20deg" }],
+  },
+  topRightLeaf: {
+    position: "absolute",
+    top: 30,
+    right: -25,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "#F5C518",
+    opacity: 0.85,
+    transform: [{ rotate: "25deg" }],
+  },
+  bottomLeftLeaf: {
+    position: "absolute",
+    bottom: -30,
+    left: -40,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: "#F5C518",
+    opacity: 0.9,
   },
 });
