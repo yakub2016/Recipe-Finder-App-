@@ -85,7 +85,7 @@ const Sign = () => {
     try {
       setLoading(true);
       await registerUser({ name, email, phone, password });
-      router.replace("/login");
+      router.replace("/home");
     } catch (e: any) {
       Alert.alert("Sign up failed", e?.message ?? "Something went wrong.");
     } finally {

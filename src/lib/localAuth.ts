@@ -56,6 +56,8 @@ export async function registerUser(input: {
   };
 
   await writeUsers([...users, user]);
+  // A new account is signed in straight away.
+  await AsyncStorage.setItem(SESSION_KEY, user.id);
   return toPublic(user);
 }
 
