@@ -85,3 +85,21 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
 export async function logoutUser(): Promise<void> {
   await AsyncStorage.removeItem(SESSION_KEY);
 }
+
+/** True if an account with this email exists on this device. */
+export async function emailExists(email: string): Promise<boolean> {
+  const normalized = email.trim().toLowerCase();
+  return (await readUsers()).some((u) => u.email === normalized);
+}
+
+/** Replaces the password for the account with this email. */
+export async function updatePassword(email: string, newPassword: string): Promise<void> {
+  const normalized = email.trim().toLowerCase();
+  const users = await readUsers();
+  const index = users.findIndex((u) => u.email === normalized);
+  if (index === -1) {
+    throw new Error("No account found with this email.");
+  }
+  users[index] = { ...users[index], passwordHash: await hashPassword(newPassword) };
+  await writeUsers(users);
+}

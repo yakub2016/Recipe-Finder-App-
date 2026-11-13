@@ -139,8 +139,8 @@ const Login = () => {
                 <Text style={styles.rememberText}>Remember me</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => {}} hitSlop={8}>
-                <Text style={styles.forgot}>Forgot Password</Text>
+              <TouchableOpacity onPress={() => router.push("/forgotpassword")} hitSlop={8}>
+                <Text style={styles.forgot} >Forgot Password</Text>
               </TouchableOpacity>
             </View>
 

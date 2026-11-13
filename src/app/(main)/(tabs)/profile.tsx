@@ -1,12 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius } from "../../../constants/theme";
 import { useFavorites } from "../../../context/FavoritesContext";
 import { useAsync } from "../../../hooks/useAsync";
 import { getCurrentUser, logoutUser } from "../../../lib/localAuth";
 import type { PublicUser } from "../../../lib/localAuth";
+import { useState } from "react";
+import ConfirmModal from "@/components/common/conformModal";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 type DetailItem = { key: string; icon: IconName; label: string; value: string };
@@ -22,14 +31,27 @@ function initials(name: string): string {
 }
 
 function memberSince(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function detailsFor(user: PublicUser): DetailItem[] {
   return [
-    { key: "name", icon: "person-outline", label: "Full name", value: user.name },
+    {
+      key: "name",
+      icon: "person-outline",
+      label: "Full name",
+      value: user.name,
+    },
     { key: "email", icon: "mail-outline", label: "Email", value: user.email },
-    { key: "phone", icon: "call-outline", label: "Phone", value: user.phone || "Not added" },
+    {
+      key: "phone",
+      icon: "call-outline",
+      label: "Phone",
+      value: user.phone || "Not added",
+    },
   ];
 }
 
@@ -38,6 +60,7 @@ export default function ProfileScreen() {
   const user = useAsync(() => getCurrentUser(), []);
   const me = user.data;
   const details = me ? detailsFor(me) : [];
+  const [logoutVisible, setLogoutVisible] = useState(false);
 
   const handleLogout = async () => {
     await logoutUser();
@@ -63,7 +86,9 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
-            <Text style={styles.statValue}>{me ? memberSince(me.createdAt) : "—"}</Text>
+            <Text style={styles.statValue}>
+              {me ? memberSince(me.createdAt) : "—"}
+            </Text>
             <Text style={styles.statLabel}>Member since</Text>
           </View>
         </View>
@@ -72,7 +97,11 @@ export default function ProfileScreen() {
   );
 
   const footer = (
-    <TouchableOpacity style={styles.logout} onPress={handleLogout} activeOpacity={0.85}>
+    <TouchableOpacity
+      style={styles.logout}
+      onPress={() => setLogoutVisible(true)}
+      activeOpacity={0.85}
+    >
       <Ionicons name="log-out-outline" size={18} color={colors.danger} />
       <Text style={styles.logoutText}>Log out</Text>
     </TouchableOpacity>
@@ -102,6 +131,14 @@ export default function ProfileScreen() {
         )}
         // Wrap rows in a card look via the list container
         style={styles.list}
+      />
+      <ConfirmModal
+        visible={logoutVisible}
+        onCancel={() => setLogoutVisible(false)}
+        onConfirm={() => {
+          setLogoutVisible(false);
+          handleLogout();
+        }}
       />
     </SafeAreaView>
   );
