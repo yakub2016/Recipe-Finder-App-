@@ -7,6 +7,7 @@ import { usePullToRefresh } from "../../../hooks/usePullToRefresh";
 import StateView from "../../../components/common/StateView";
 import RecipeFlatList from "../../../components/common/RecipeFlatList";
 import SearchBar from "../../../components/common/SearchBar";
+import SearchSuggestions from "../../../components/common/SearchSuggestions";
 import HomeHeader from "../../../components/home/HomeHeader";
 import BannerCarousel from "../../../components/home/BannerCarousel";
 import CategoryChips from "../../../components/home/CategoryChips";
@@ -44,7 +45,23 @@ export default function HomeScreen() {
 
       {/* 3. Search */}
       <View style={styles.block}>
-        <SearchBar value={feed.query} onChangeText={feed.setQuery} />
+        <SearchBar
+          value={feed.query}
+          onChangeText={feed.setQuery}
+          onFocus={() => feed.setQuery(feed.query)}
+          onSubmitEditing={feed.closeSearch}
+          open={feed.open}
+          onCancel={feed.closeSearch}
+        />
+        <SearchSuggestions
+          query={feed.query}
+          open={feed.open}
+          recent={feed.recent}
+          onPickTerm={feed.pickTerm}
+          onRemember={feed.rememberSearch}
+          onClearRecent={feed.clearRecent}
+          onClose={feed.closeSearch}
+        />
       </View>
 
       {/* 4. Menu categories */}

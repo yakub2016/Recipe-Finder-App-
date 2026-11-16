@@ -5,6 +5,7 @@ import { useRecipeFeed } from "../../../hooks/useRecipeFeed";
 import StateView from "../../../components/common/StateView";
 import RecipeFlatList from "../../../components/common/RecipeFlatList";
 import SearchBar from "../../../components/common/SearchBar";
+import SearchSuggestions from "../../../components/common/SearchSuggestions";
 import CategoryChips from "../../../components/home/CategoryChips";
 
 export default function ExploreScreen() {
@@ -15,7 +16,24 @@ export default function ExploreScreen() {
       <Text style={styles.title}>Explore</Text>
 
       <View style={styles.block}>
-        <SearchBar value={feed.query} onChangeText={feed.setQuery} placeholder="Search any recipe" />
+        <SearchBar
+          value={feed.query}
+          onChangeText={feed.setQuery}
+          placeholder="Search any recipe"
+          onFocus={() => feed.setQuery(feed.query)}
+          onSubmitEditing={feed.closeSearch}
+          open={feed.open}
+          onCancel={feed.closeSearch}
+        />
+        <SearchSuggestions
+          query={feed.query}
+          open={feed.open}
+          recent={feed.recent}
+          onPickTerm={feed.pickTerm}
+          onRemember={feed.rememberSearch}
+          onClearRecent={feed.clearRecent}
+          onClose={feed.closeSearch}
+        />
       </View>
 
       <View style={styles.block}>

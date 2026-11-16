@@ -1,9 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import {
+  Alert,
   FlatList,
   StatusBar,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -14,7 +17,10 @@ import { useFavorites } from "../../../context/FavoritesContext";
 import { useAsync } from "../../../hooks/useAsync";
 import { getCurrentUser, logoutUser } from "../../../lib/localAuth";
 import type { PublicUser } from "../../../lib/localAuth";
-import { useState } from "react";
+import {
+  getNotificationsEnabled,
+  setNotificationsEnabled,
+} from "../../../lib/preferences";
 import ConfirmModal from "@/components/common/conformModal";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
@@ -39,12 +45,7 @@ function memberSince(iso: string): string {
 
 function detailsFor(user: PublicUser): DetailItem[] {
   return [
-    {
-      key: "name",
-      icon: "person-outline",
-      label: "Full name",
-      value: user.name,
-    },
+    { key: "name", icon: "person-outline", label: "Full name", value: user.name },
     { key: "email", icon: "mail-outline", label: "Email", value: user.email },
     {
       key: "phone",
@@ -58,18 +59,46 @@ function detailsFor(user: PublicUser): DetailItem[] {
 export default function ProfileScreen() {
   const { ids } = useFavorites();
   const user = useAsync(() => getCurrentUser(), []);
+  const prefs = useAsync(() => getNotificationsEnabled(), []);
   const me = user.data;
   const details = me ? detailsFor(me) : [];
   const [logoutVisible, setLogoutVisible] = useState(false);
+
+  // Reload the profile every time this tab is shown (e.g. after editing).
+  const reloadUser = user.reload;
+  const reloadPrefs = prefs.reload;
+  useFocusEffect(
+    useCallback(() => {
+      reloadUser();
+      reloadPrefs();
+    }, [reloadUser, reloadPrefs]),
+  );
 
   const handleLogout = async () => {
     await logoutUser();
     router.replace("/login");
   };
 
+  const toggleNotifications = async (value: boolean) => {
+    await setNotificationsEnabled(value);
+    prefs.reload();
+  };
+
   const header = (
     <View>
-      <Text style={styles.title}>Profile</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>Profile</Text>
+        {me && (
+          <TouchableOpacity
+            onPress={() => router.push("/edit-profile")}
+            style={styles.editPill}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="create-outline" size={15} color="#F5C518" />
+            <Text style={styles.editPillText}>Edit</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       {/* Header card: solid yellow */}
       <View style={styles.hero}>
@@ -97,14 +126,61 @@ export default function ProfileScreen() {
   );
 
   const footer = (
-    <TouchableOpacity
-      style={styles.logout}
-      onPress={() => setLogoutVisible(true)}
-      activeOpacity={0.85}
-    >
-      <Ionicons name="log-out-outline" size={18} color={colors.danger} />
-      <Text style={styles.logoutText}>Log out</Text>
-    </TouchableOpacity>
+    <View>
+      {/* Settings */}
+      <Text style={styles.sectionLabel}>Settings</Text>
+      <View style={styles.settingsCard}>
+        <SettingRow
+          icon="create-outline"
+          label="Edit profile"
+          onPress={() => router.push("/edit-profile")}
+        />
+        <SettingRow
+          icon="heart-outline"
+          label="My favorites"
+          value={`${ids.length}`}
+          onPress={() => router.navigate("/favorites")}
+        />
+        <SettingRow
+          icon="lock-closed-outline"
+          label="Change password"
+          onPress={() => router.push("/forgotpassword")}
+        />
+        <SettingRow
+          icon="notifications-outline"
+          label="Notifications"
+          right={
+            <Switch
+              value={prefs.data ?? true}
+              onValueChange={toggleNotifications}
+              trackColor={{ false: "#E5E5E5", true: "#F5C518" }}
+              thumbColor="#FFFFFF"
+            />
+          }
+        />
+        <SettingRow
+          icon="information-circle-outline"
+          label="About Hanger Station"
+          value="v1.0.0"
+          last
+          onPress={() =>
+            Alert.alert(
+              "Hanger Station",
+              "Find, save and cook recipes from around the world.\nVersion 1.0.0",
+            )
+          }
+        />
+      </View>
+
+      <TouchableOpacity
+        style={styles.logout}
+        onPress={() => setLogoutVisible(true)}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="log-out-outline" size={18} color={colors.danger} />
+        <Text style={styles.logoutText}>Log out</Text>
+      </TouchableOpacity>
+    </View>
   );
 
   return (
@@ -129,7 +205,6 @@ export default function ProfileScreen() {
             </View>
           </View>
         )}
-        // Wrap rows in a card look via the list container
         style={styles.list}
       />
       <ConfirmModal
@@ -141,6 +216,41 @@ export default function ProfileScreen() {
         }}
       />
     </SafeAreaView>
+  );
+}
+
+function SettingRow({
+  icon,
+  label,
+  value,
+  right,
+  last,
+  onPress,
+}: {
+  icon: IconName;
+  label: string;
+  value?: string;
+  right?: React.ReactNode;
+  last?: boolean;
+  onPress?: () => void;
+}) {
+  const content = (
+    <View style={[styles.setRow, !last && styles.setRowBorder]}>
+      <View style={styles.rowIcon}>
+        <Ionicons name={icon} size={18} color="#F5C518" />
+      </View>
+      <Text style={styles.setLabel}>{label}</Text>
+      {value ? <Text style={styles.setValue}>{value}</Text> : null}
+      {right ?? <Ionicons name="chevron-forward" size={18} color={colors.muted} />}
+    </View>
+  );
+
+  return onPress && !right ? (
+    <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
+      {content}
+    </TouchableOpacity>
+  ) : (
+    content
   );
 }
 
@@ -157,11 +267,32 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     paddingTop: 8,
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
   title: {
     fontSize: 24,
     fontWeight: "800",
     color: colors.text,
-    marginBottom: 16,
+  },
+  editPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  editPillText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.text,
   },
   hero: {
     borderRadius: 26,
@@ -263,6 +394,44 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.text,
     marginTop: 2,
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.muted,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginTop: 24,
+    marginBottom: 10,
+    paddingHorizontal: 4,
+  },
+  settingsCard: {
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: "hidden",
+  },
+  setRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  setRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  setLabel: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.text,
+  },
+  setValue: {
+    fontSize: 13,
+    color: colors.muted,
   },
   logout: {
     marginTop: 24,

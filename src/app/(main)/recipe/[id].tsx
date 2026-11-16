@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius } from "../../../constants/theme";
@@ -10,6 +11,7 @@ import { formatMinutes, capitalize } from "../../../utils/format";
 import type { Recipe } from "../../../types/recipe";
 import StateView from "../../../components/common/StateView";
 import FavoriteButton from "../../../components/common/FavoriteButton";
+import ShareRecipeModal from "../../../components/common/ShareRecipeModal";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
@@ -20,6 +22,7 @@ export default function RecipeDetailScreen() {
   const r = recipe.data;
 
   const isReady = !recipe.loading && !recipe.error && !!r;
+  const [shareOpen, setShareOpen] = useState(false);
 
   if (!isReady || !r) {
     return (
@@ -46,7 +49,7 @@ export default function RecipeDetailScreen() {
         keyExtractor={(_, i) => `step-${i}`}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        ListHeaderComponent={<DetailHeader recipe={r} />}
+        ListHeaderComponent={<DetailHeader recipe={r} onShare={() => setShareOpen(true)} />}
         renderItem={({ item, index }) => (
           <View style={styles.stepRow}>
             <View style={styles.stepNumber}>
@@ -56,11 +59,12 @@ export default function RecipeDetailScreen() {
           </View>
         )}
       />
+      <ShareRecipeModal visible={shareOpen} recipe={r} onClose={() => setShareOpen(false)} />
     </View>
   );
 }
 
-function DetailHeader({ recipe: r }: { recipe: Recipe }) {
+function DetailHeader({ recipe: r, onShare }: { recipe: Recipe; onShare: () => void }) {
   return (
     <View>
       <Image source={{ uri: r.image }} style={styles.hero} contentFit="cover" />
@@ -69,7 +73,12 @@ function DetailHeader({ recipe: r }: { recipe: Recipe }) {
         <TouchableOpacity onPress={() => router.back()} style={styles.roundBtn} accessibilityLabel="Go back">
           <Ionicons name="chevron-back" size={22} color="#F5C518" />
         </TouchableOpacity>
-        <FavoriteButton id={r.id} size={20} style={styles.roundBtn} />
+        <View style={styles.actions}>
+          <TouchableOpacity onPress={onShare} style={styles.roundBtn} accessibilityLabel="Share recipe">
+            <Ionicons name="share-social-outline" size={20} color="#F5C518" />
+          </TouchableOpacity>
+          <FavoriteButton id={r.id} size={20} style={styles.roundBtn} />
+        </View>
       </SafeAreaView>
 
       <View style={styles.body}>
@@ -137,6 +146,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingTop: 8,
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 10,
   },
   roundBtn: {
     width: 40,

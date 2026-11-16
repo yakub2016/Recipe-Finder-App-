@@ -105,3 +105,15 @@ export async function updatePassword(email: string, newPassword: string): Promis
   users[index] = { ...users[index], passwordHash: await hashPassword(newPassword) };
   await writeUsers(users);
 }
+
+/** Saves name and phone for the signed-in account. */
+export async function updateCurrentProfile(input: { name: string; phone: string }): Promise<PublicUser> {
+  const id = await AsyncStorage.getItem(SESSION_KEY);
+  if (!id) throw new Error("You are not signed in.");
+  const users = await readUsers();
+  const index = users.findIndex((u) => u.id === id);
+  if (index === -1) throw new Error("Account not found.");
+  users[index] = { ...users[index], name: input.name.trim(), phone: input.phone.trim() };
+  await writeUsers(users);
+  return toPublic(users[index]);
+}

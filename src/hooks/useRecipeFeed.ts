@@ -1,18 +1,23 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { Keyboard } from "react-native";
 import { useAsync } from "./useAsync";
 import { useDebouncedValue } from "./useDebouncedValue";
+import { useRecentSearches } from "./useRecentSearches";
 import { recipeService } from "../services/recipes";
 
 /**
  * Shared data for Home and Explore.
- * - Typing in search (debounced 400ms) switches to /recipes/search.
- * - Picking a category switches to /recipes/tag/{tag}.
+ * - Typing (debounced 250ms) switches the grid to /recipes/search.
+ * - Picking a category switches it to /recipes/tag/{tag}.
  * - Otherwise shows the full /recipes list.
+ * - `open` controls the live suggestion panel under the search bar.
  */
 export function useRecipeFeed() {
-  const [query, setQuery] = useState("");
+  const [query, setQueryText] = useState("");
+  const [open, setOpen] = useState(false);
   const [tag, setTag] = useState<string | null>(null);
-  const debouncedQuery = useDebouncedValue(query.trim(), 400);
+  const debouncedQuery = useDebouncedValue(query.trim(), 250);
+  const recent = useRecentSearches();
 
   const all = useAsync(() => recipeService.list(30), []);
   const tags = useAsync(() => recipeService.tags(), []);
@@ -28,9 +33,32 @@ export function useRecipeFeed() {
   const filterActive = searching || tag !== null;
   const active = filterActive ? filtered : all;
 
+  // Typing opens the suggestion panel.
+  const setQuery = useCallback((text: string) => {
+    setQueryText(text);
+    setOpen(true);
+  }, []);
+
+  // Pick a recent term or a suggestion: fill the search and keep the panel open.
+  const pickTerm = useCallback((term: string) => {
+    setQueryText(term);
+    setOpen(true);
+  }, []);
+
+  const closeSearch = useCallback(() => {
+    setOpen(false);
+    Keyboard.dismiss();
+  }, []);
+
   return {
     query,
     setQuery,
+    open,
+    closeSearch,
+    pickTerm,
+    recent: recent.items,
+    rememberSearch: recent.remember,
+    clearRecent: recent.clear,
     tag,
     setTag,
     tags: tags.data ?? [],

@@ -29,6 +29,8 @@ export default function RecipeFlatList({ recipes, header, footer, empty, refresh
       columnWrapperStyle={styles.row}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       ListHeaderComponent={header ?? undefined}
       ListFooterComponent={footer ?? undefined}
       ListEmptyComponent={empty ?? undefined}

@@ -1,13 +1,15 @@
 {
   "expo": {
     "name": "Foodrecipes",
-    "slug": "foodrecipes",
+    "slug": "my-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "ios": {},
+    "ios": {
+      "bundleIdentifier": "com.spackdigi.hangerstation"
+    },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#F8BD23",
@@ -16,7 +18,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.mooduyakub.myapp"
+      "package": "com.spackdigi.hangerstation"
     },
     "web": {
       "output": "server",
